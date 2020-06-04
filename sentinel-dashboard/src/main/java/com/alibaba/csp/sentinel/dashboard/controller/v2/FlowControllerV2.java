@@ -25,8 +25,10 @@ import com.alibaba.csp.sentinel.util.StringUtil;
 
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.FlowRuleEntity;
 import com.alibaba.csp.sentinel.dashboard.repository.rule.InMemoryRuleRepositoryAdapter;
+import com.alibaba.csp.sentinel.dashboard.repository.rule.JPAFlueRuleRepository;
 import com.alibaba.csp.sentinel.dashboard.rule.DynamicRuleProvider;
 import com.alibaba.csp.sentinel.dashboard.rule.DynamicRulePublisher;
+import com.alibaba.csp.sentinel.dashboard.domain.FlowRuleVo;
 import com.alibaba.csp.sentinel.dashboard.domain.Result;
 
 import org.slf4j.Logger;
@@ -57,17 +59,25 @@ public class FlowControllerV2 {
 
     @Autowired
     private InMemoryRuleRepositoryAdapter<FlowRuleEntity> repository;
+    
+    //同步到统计数据库一份，新增、更新和删除时同步。 
+    @Autowired
+    @Qualifier("jpaFlueRuleRepository")
+    private JPAFlueRuleRepository jpaFlueRuleRepository;
 
     @Autowired
-    @Qualifier("flowRuleDefaultProvider")
+    //@Qualifier("flowRuleDefaultProvider")
+    @Qualifier("flowRuleZookeeperProvider")
     private DynamicRuleProvider<List<FlowRuleEntity>> ruleProvider;
+    
     @Autowired
-    @Qualifier("flowRuleDefaultPublisher")
+    //@Qualifier("flowRuleDefaultPublisher")
+    @Qualifier("flowRuleZookeeperPublisher")
     private DynamicRulePublisher<List<FlowRuleEntity>> rulePublisher;
 
     @GetMapping("/rules")
     @AuthAction(PrivilegeType.READ_RULE)
-    public Result<List<FlowRuleEntity>> apiQueryMachineRules(@RequestParam String app) {
+    public Result<List<FlowRuleVo>> apiQueryMachineRules(@RequestParam String app) {
 
         if (StringUtil.isEmpty(app)) {
             return Result.ofFail(-1, "app can't be null or empty");
@@ -83,7 +93,9 @@ public class FlowControllerV2 {
                 }
             }
             rules = repository.saveAll(rules);
-            return Result.ofSuccess(rules);
+            
+            //展示时转换为VO，将ID置为String类型，防止JS处理超过18位数字时出错
+            return Result.ofSuccess(FlowRuleVo.fromFlueRuleEntityList(rules));
         } catch (Throwable throwable) {
             logger.error("Error when querying flow rules", throwable);
             return Result.ofThrowable(-1, throwable);
@@ -150,6 +162,14 @@ public class FlowControllerV2 {
         entity.setResource(entity.getResource().trim());
         try {
             entity = repository.save(entity);
+            
+            //同步到统计库
+            try {
+				jpaFlueRuleRepository.save(entity);
+			} catch (Exception e) {
+				logger.error("Failed to sycn [add] flow rule to jpa-datasource", e);
+			}
+            
             publishRules(entity.getApp());
         } catch (Throwable throwable) {
             logger.error("Failed to add flow rule", throwable);
@@ -188,9 +208,18 @@ public class FlowControllerV2 {
         entity.setGmtModified(date);
         try {
             entity = repository.save(entity);
+            
             if (entity == null) {
                 return Result.ofFail(-1, "save entity fail");
             }
+            
+          //同步到统计库
+            try {
+				jpaFlueRuleRepository.save(entity);
+			} catch (Exception e) {
+				logger.error("Failed to sycn [update] flow rule to jpa-datasource", e);
+			}
+            
             publishRules(oldEntity.getApp());
         } catch (Throwable throwable) {
             logger.error("Failed to update flow rule", throwable);
@@ -212,8 +241,16 @@ public class FlowControllerV2 {
 
         try {
             repository.delete(id);
+            //同步到统计库
+            try {
+				jpaFlueRuleRepository.delete(id);
+			} catch (Exception e) {
+				logger.error("Failed to sycn [delete] flow rule to jpa-datasource", e);
+			}
+            
             publishRules(oldEntity.getApp());
         } catch (Exception e) {
+        	logger.error("Failed to delete flow rule", e);
             return Result.ofFail(-1, e.getMessage());
         }
         return Result.ofSuccess(id);

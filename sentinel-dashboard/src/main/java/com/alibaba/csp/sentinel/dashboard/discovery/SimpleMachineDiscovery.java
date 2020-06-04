@@ -22,9 +22,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.alibaba.csp.sentinel.util.AssertUtil;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.alibaba.csp.sentinel.dashboard.repository.JPAMachineInfoRespository;
+import com.alibaba.csp.sentinel.util.AssertUtil;
 
 /**
  * @author leyou
@@ -32,13 +36,27 @@ import org.springframework.stereotype.Component;
 @Component
 public class SimpleMachineDiscovery implements MachineDiscovery {
 
+    private final Logger logger = LoggerFactory.getLogger(SimpleMachineDiscovery.class);
+
+    
     private final ConcurrentMap<String, AppInfo> apps = new ConcurrentHashMap<>();
+    
+    @Autowired
+    private JPAMachineInfoRespository jpaMachineInfoRespository;
 
     @Override
     public long addMachine(MachineInfo machineInfo) {
         AssertUtil.notNull(machineInfo, "machineInfo cannot be null");
         AppInfo appInfo = apps.computeIfAbsent(machineInfo.getApp(), o -> new AppInfo(machineInfo.getApp(), machineInfo.getAppType()));
         appInfo.addMachine(machineInfo);
+        
+      //同步到统计库
+    	try {
+    		jpaMachineInfoRespository.addOrUpdate(machineInfo);
+		} catch (Exception e) {
+			logger.error("error when sync [addOrUpdate] machine info [ "+ machineInfo +" ] to static database ",e);
+		}
+        
         return 1;
     }
 
@@ -47,7 +65,15 @@ public class SimpleMachineDiscovery implements MachineDiscovery {
         AssertUtil.assertNotBlank(app, "app name cannot be blank");
         AppInfo appInfo = apps.get(app);
         if (appInfo != null) {
-            return appInfo.removeMachine(ip, port);
+        	MachineInfo machineInfo = appInfo.removeMachine(ip, port);
+        	//同步到统计库
+        	try {
+        		jpaMachineInfoRespository.delete(machineInfo);
+    		} catch (Exception e) {
+    			logger.error("error when sync [delete] machine info [ "+ machineInfo +" ] to static database ",e);
+    		}
+        	
+            return true;
         }
         return false;
     }

@@ -78,16 +78,16 @@ public class AppInfo {
         return machines.add(machineInfo);
     }
 
-    public synchronized boolean removeMachine(String ip, int port) {
+    public synchronized MachineInfo removeMachine(String ip, int port) {
         Iterator<MachineInfo> it = machines.iterator();
         while (it.hasNext()) {
             MachineInfo machine = it.next();
             if (machine.getIp().equals(ip) && machine.getPort() == port) {
                 it.remove();
-                return true;
+                return machine;
             }
         }
-        return false;
+        return null;
     }
 
     public Optional<MachineInfo> getMachine(String ip, int port) {
