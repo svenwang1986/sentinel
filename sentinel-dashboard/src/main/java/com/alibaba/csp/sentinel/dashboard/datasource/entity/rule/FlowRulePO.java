@@ -11,8 +11,8 @@ import javax.persistence.Transient;
 import com.alibaba.csp.sentinel.slots.block.flow.ClusterFlowConfig;
 
 @Entity
-@Table(name = "sentinel_flue_rule")
-public class FlueRulePO {
+@Table(name = "sentinel_flow_rule")
+public class FlowRulePO {
 	
 	/** id，主键 */
 	@Id

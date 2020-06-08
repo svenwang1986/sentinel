@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.FlowRuleEntity;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.FlueRulePO;
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.FlowRulePO;
 import com.alibaba.csp.sentinel.dashboard.discovery.MachineInfo;
 import com.alibaba.csp.sentinel.util.StringUtil;
 
@@ -27,7 +27,7 @@ public class JPAFlueRuleRepository implements RuleRepository<FlowRuleEntity, Lon
             return null;
         }
 
-        FlueRulePO rulePo = new FlueRulePO();
+        FlowRulePO rulePo = new FlowRulePO();
         BeanUtils.copyProperties(entity,rulePo);
         em.merge(rulePo);
         return null;
@@ -45,7 +45,7 @@ public class JPAFlueRuleRepository implements RuleRepository<FlowRuleEntity, Lon
 	@Override
 	public FlowRuleEntity delete(Long id) {
 		
-		FlueRulePO po = em.find(FlueRulePO.class, id);
+		FlowRulePO po = em.find(FlowRulePO.class, id);
 		
 		if(po != null){
 			em.remove(po);
@@ -56,7 +56,12 @@ public class JPAFlueRuleRepository implements RuleRepository<FlowRuleEntity, Lon
 
 	@Override
 	public FlowRuleEntity findById(Long id) {
-		return em.find(FlowRuleEntity.class, id);
+		FlowRuleEntity entity = new FlowRuleEntity();
+		
+		FlowRulePO po = em.find(FlowRulePO.class, id);
+		BeanUtils.copyProperties(po, entity);
+		
+		return entity;
 	}
 
 	@Override

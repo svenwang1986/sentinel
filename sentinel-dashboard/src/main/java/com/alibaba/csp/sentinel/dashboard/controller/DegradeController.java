@@ -18,24 +18,25 @@ package com.alibaba.csp.sentinel.dashboard.controller;
 import java.util.Date;
 import java.util.List;
 
-import com.alibaba.csp.sentinel.dashboard.auth.AuthAction;
-import com.alibaba.csp.sentinel.dashboard.client.SentinelApiClient;
-import com.alibaba.csp.sentinel.dashboard.discovery.MachineInfo;
-import com.alibaba.csp.sentinel.dashboard.auth.AuthService.PrivilegeType;
-import com.alibaba.csp.sentinel.slots.block.RuleConstant;
-import com.alibaba.csp.sentinel.util.StringUtil;
-
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.DegradeRuleEntity;
-import com.alibaba.csp.sentinel.dashboard.domain.Result;
-import com.alibaba.csp.sentinel.dashboard.repository.rule.InMemDegradeRuleStore;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.alibaba.csp.sentinel.dashboard.auth.AuthAction;
+import com.alibaba.csp.sentinel.dashboard.auth.AuthService.PrivilegeType;
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.DegradeRuleEntity;
+import com.alibaba.csp.sentinel.dashboard.domain.Result;
+import com.alibaba.csp.sentinel.dashboard.repository.rule.InMemDegradeRuleStore;
+import com.alibaba.csp.sentinel.dashboard.repository.rule.jpa.JPADegradeRuleRepository;
+import com.alibaba.csp.sentinel.dashboard.rule.zookeeper.DegradeRuleZKProvider;
+import com.alibaba.csp.sentinel.dashboard.rule.zookeeper.DegradeRuleZKPublisher;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.util.StringUtil;
 
 /**
  * @author leyou
@@ -48,8 +49,17 @@ public class DegradeController {
 
     @Autowired
     private InMemDegradeRuleStore repository;
+    
     @Autowired
-    private SentinelApiClient sentinelApiClient;
+    @Qualifier("jpaDegradeRuleRepository")
+    private JPADegradeRuleRepository jpaDegradeRuleRepository;
+    //@Autowired
+    //private SentinelApiClient sentinelApiClient;
+    
+    @Autowired
+    private DegradeRuleZKPublisher publisher;
+    @Autowired
+    private DegradeRuleZKProvider provider;
 
     @ResponseBody
     @RequestMapping("/rules.json")
@@ -66,8 +76,11 @@ public class DegradeController {
             return Result.ofFail(-1, "port can't be null");
         }
         try {
-            List<DegradeRuleEntity> rules = sentinelApiClient.fetchDegradeRuleOfMachine(app, ip, port);
+        	//拉取全部规则，改为从规则中读取
+            //List<DegradeRuleEntity> rules = sentinelApiClient.fetchDegradeRuleOfMachine(app, ip, port);
+            List<DegradeRuleEntity> rules  = provider.getRules(app);
             rules = repository.saveAll(rules);
+            
             return Result.ofSuccess(rules);
         } catch (Throwable throwable) {
             logger.error("queryApps error:", throwable);
@@ -109,7 +122,8 @@ public class DegradeController {
         }
         DegradeRuleEntity entity = new DegradeRuleEntity();
         entity.setApp(app.trim());
-        entity.setIp(ip.trim());
+        //不是针对单机制定规则，所以屏蔽
+        //entity.setIp(ip.trim());
         entity.setPort(port);
         entity.setLimitApp(limitApp.trim());
         entity.setResource(resource.trim());
@@ -208,7 +222,18 @@ public class DegradeController {
     }
 
     private boolean publishRules(String app, String ip, Integer port) {
-        List<DegradeRuleEntity> rules = repository.findAllByMachine(MachineInfo.of(app, ip, port));
-        return sentinelApiClient.setDegradeRuleOfMachine(app, ip, port, rules);
+        List<DegradeRuleEntity> rules = repository.findAllByApp(app);
+        
+        //return sentinelApiClient.setDegradeRuleOfMachine(app, ip, port, rules);
+        
+        try {
+			publisher.publish(app, rules);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+        
+        return true;
     }
 }

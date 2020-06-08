@@ -17,25 +17,55 @@ package com.alibaba.csp.sentinel.dashboard.datasource.entity.rule;
 
 import java.util.Date;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
 import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
 
 /**
  * @author leyou
  */
+@Entity
+@Table(name = "sentinel_degrade_rule")
 public class DegradeRuleEntity implements RuleEntity {
-    private Long id;
+	@Id
+	@Column(name = "id")
+	private Long id;
+	
+	@Column(name = "app")
     private String app;
+	
+	@Column(name = "ip")
     private String ip;
+	
+	@Column(name = "port")
     private Integer port;
+
+	@Column(name = "resource")
     private String resource;
+
+	@Column(name = "limitApp")
     private String limitApp;
+
+	@Column(name = "count")
     private Double count;
+
+	@Column(name = "timeWindow")
     private Integer timeWindow;
-    /**
+    
+	/**
      * 0 rt 限流; 1为异常;
      */
+	@Column(name = "grade")
     private Integer grade;
+
+	@Column(name = "gmtCreate")
     private Date gmtCreate;
+	
+
+	@Column(name = "gmtModified")
     private Date gmtModified;
 
     public static DegradeRuleEntity fromDegradeRule(String app, String ip, Integer port, DegradeRule rule) {
