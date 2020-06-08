@@ -18,19 +18,6 @@ package com.alibaba.csp.sentinel.dashboard.controller.v2;
 import java.util.Date;
 import java.util.List;
 
-import com.alibaba.csp.sentinel.dashboard.auth.AuthAction;
-import com.alibaba.csp.sentinel.dashboard.auth.AuthService;
-import com.alibaba.csp.sentinel.dashboard.auth.AuthService.PrivilegeType;
-import com.alibaba.csp.sentinel.util.StringUtil;
-
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.FlowRuleEntity;
-import com.alibaba.csp.sentinel.dashboard.repository.rule.InMemoryRuleRepositoryAdapter;
-import com.alibaba.csp.sentinel.dashboard.repository.rule.JPAFlueRuleRepository;
-import com.alibaba.csp.sentinel.dashboard.rule.DynamicRuleProvider;
-import com.alibaba.csp.sentinel.dashboard.rule.DynamicRulePublisher;
-import com.alibaba.csp.sentinel.dashboard.domain.FlowRuleVo;
-import com.alibaba.csp.sentinel.dashboard.domain.Result;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +31,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.alibaba.csp.sentinel.dashboard.auth.AuthAction;
+import com.alibaba.csp.sentinel.dashboard.auth.AuthService;
+import com.alibaba.csp.sentinel.dashboard.auth.AuthService.PrivilegeType;
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.FlowRuleEntity;
+import com.alibaba.csp.sentinel.dashboard.domain.FlowRuleVo;
+import com.alibaba.csp.sentinel.dashboard.domain.Result;
+import com.alibaba.csp.sentinel.dashboard.repository.rule.InMemoryRuleRepositoryAdapter;
+import com.alibaba.csp.sentinel.dashboard.repository.rule.JPAFlueRuleRepository;
+import com.alibaba.csp.sentinel.dashboard.rule.DynamicRuleProvider;
+import com.alibaba.csp.sentinel.dashboard.rule.DynamicRulePublisher;
+import com.alibaba.csp.sentinel.util.StringUtil;
 
 /**
  * Flow rule controller (v2).
@@ -164,11 +163,11 @@ public class FlowControllerV2 {
             entity = repository.save(entity);
             
             //同步到统计库
-            try {
-				jpaFlueRuleRepository.save(entity);
-			} catch (Exception e) {
-				logger.error("Failed to sycn [add] flow rule to jpa-datasource", e);
-			}
+//            try {
+//				jpaFlueRuleRepository.save(entity);
+//			} catch (Exception e) {
+//				logger.error("Failed to sycn [add] flow rule to jpa-datasource", e);
+//			}
             
             publishRules(entity.getApp());
         } catch (Throwable throwable) {
@@ -214,11 +213,11 @@ public class FlowControllerV2 {
             }
             
           //同步到统计库
-            try {
-				jpaFlueRuleRepository.save(entity);
-			} catch (Exception e) {
-				logger.error("Failed to sycn [update] flow rule to jpa-datasource", e);
-			}
+//            try {
+//				jpaFlueRuleRepository.save(entity);
+//			} catch (Exception e) {
+//				logger.error("Failed to sycn [update] flow rule to jpa-datasource", e);
+//			}
             
             publishRules(oldEntity.getApp());
         } catch (Throwable throwable) {
@@ -242,11 +241,11 @@ public class FlowControllerV2 {
         try {
             repository.delete(id);
             //同步到统计库
-            try {
+            /*try {
 				jpaFlueRuleRepository.delete(id);
 			} catch (Exception e) {
 				logger.error("Failed to sycn [delete] flow rule to jpa-datasource", e);
-			}
+			}*/
             
             publishRules(oldEntity.getApp());
         } catch (Exception e) {
