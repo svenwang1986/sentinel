@@ -350,6 +350,11 @@ public class MetricFetcher {
                     entity.setExceptionQps(node.getExceptionQps());
                     entity.setCount(1);
                     entity.setResource(node.getResource());
+                   
+                    //扩展字段记录主机信息
+                    entity.setIp(machine.getIp());
+                    entity.setHostName(machine.getHostname());
+                    
                     map.put(key, entity);
                 }
             } catch (Exception e) {

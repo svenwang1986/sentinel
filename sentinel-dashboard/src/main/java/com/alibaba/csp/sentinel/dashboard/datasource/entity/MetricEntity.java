@@ -46,6 +46,14 @@ public class MetricEntity {
     private int count;
 
     private int resourceCode;
+    
+    /**
+     * 扩展字段，记录机器IP等信息
+     */
+    
+    private String ip;
+    private String hostName;
+    
 
     public static MetricEntity copyOf(MetricEntity oldEntity) {
         MetricEntity entity = new MetricEntity();
@@ -197,8 +205,25 @@ public class MetricEntity {
     public void setSuccessQps(Long successQps) {
         this.successQps = successQps;
     }
+    
 
-    @Override
+    public String getIp() {
+		return ip;
+	}
+
+	public void setIp(String ip) {
+		this.ip = ip;
+	}
+
+	public String getHostName() {
+		return hostName;
+	}
+
+	public void setHostName(String hostName) {
+		this.hostName = hostName;
+	}
+
+	@Override
     public String toString() {
         return "MetricEntity{" +
             "id=" + id +
@@ -214,7 +239,12 @@ public class MetricEntity {
             ", rt=" + rt +
             ", count=" + count +
             ", resourceCode=" + resourceCode +
+            ", ip=" + ip +
+            ", hostName=" + hostName +
             '}';
     }
+	
+	
+	
 
 }

@@ -31,6 +31,7 @@ import com.alibaba.csp.sentinel.dashboard.auth.AuthAction;
 import com.alibaba.csp.sentinel.dashboard.auth.AuthService.PrivilegeType;
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.DegradeRuleEntity;
 import com.alibaba.csp.sentinel.dashboard.domain.Result;
+import com.alibaba.csp.sentinel.dashboard.domain.vo.DegradeRuleVO;
 import com.alibaba.csp.sentinel.dashboard.repository.rule.InMemDegradeRuleStore;
 import com.alibaba.csp.sentinel.dashboard.repository.rule.jpa.JPADegradeRuleRepository;
 import com.alibaba.csp.sentinel.dashboard.rule.zookeeper.DegradeRuleZKProvider;
@@ -64,7 +65,7 @@ public class DegradeController {
     @ResponseBody
     @RequestMapping("/rules.json")
     @AuthAction(PrivilegeType.READ_RULE)
-    public Result<List<DegradeRuleEntity>> queryMachineRules(String app, String ip, Integer port) {
+    public Result<List<DegradeRuleVO>> queryMachineRules(String app, String ip, Integer port) {
 
         if (StringUtil.isEmpty(app)) {
             return Result.ofFail(-1, "app can't be null or empty");
@@ -81,7 +82,7 @@ public class DegradeController {
             List<DegradeRuleEntity> rules  = provider.getRules(app);
             rules = repository.saveAll(rules);
             
-            return Result.ofSuccess(rules);
+            return Result.ofSuccess(DegradeRuleVO.fromEntity(rules));
         } catch (Throwable throwable) {
             logger.error("queryApps error:", throwable);
             return Result.ofThrowable(-1, throwable);

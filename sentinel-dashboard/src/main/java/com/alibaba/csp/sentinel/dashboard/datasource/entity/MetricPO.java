@@ -72,6 +72,12 @@ public class MetricPO implements Serializable {
 	/** 资源的hashCode */
 	@Column(name = "resource_code")
 	private Integer resourceCode;
+	
+	@Column(name = "ip")
+	private String ip;
+	
+	@Column(name = "hostName")
+	private String hostName;
 
 	public Long getId() {
 		return id;
@@ -177,14 +183,29 @@ public class MetricPO implements Serializable {
 		this.resourceCode = resourceCode;
 	}
 
+	public String getIp() {
+		return ip;
+	}
+
+	public void setIp(String ip) {
+		this.ip = ip;
+	}
+
+	public String getHostName() {
+		return hostName;
+	}
+
+	public void setHostName(String hostName) {
+		this.hostName = hostName;
+	}
+
 	@Override
 	public String toString() {
 		return "MetricPO [id=" + id + ", gmtCreate=" + gmtCreate + ", gmtModified=" + gmtModified + ", app=" + app
 				+ ", timestamp=" + timestamp + ", resource=" + resource + ", passQps=" + passQps + ", successQps="
 				+ successQps + ", blockQps=" + blockQps + ", exceptionQps=" + exceptionQps + ", rt=" + rt + ", count="
-				+ count + ", resourceCode=" + resourceCode + "]";
+				+ count + ", resourceCode=" + resourceCode + ", ip=" + ip + ", hostName=" + hostName + "]";
 	}
-	
-	
+
 
 }
